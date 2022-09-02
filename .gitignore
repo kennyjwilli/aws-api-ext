@@ -4,3 +4,4 @@ test-results
 target
 .cpcache
 .nrepl-port
+local
