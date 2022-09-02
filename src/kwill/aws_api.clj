@@ -179,4 +179,4 @@
   (-invoke-async [this op-map]
     (invoke-async* this op-map))
   (-invoke [this op-map]
-    (async/<!! (invoke-async* client op-map))))
+    (aws/invoke this op-map)))
