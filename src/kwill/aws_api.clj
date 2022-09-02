@@ -159,7 +159,7 @@
 (defn- invoke-async*
   [client op-map]
   (async/go
-    (let [response (aws.async/invoke client op-map)]
+    (let [response (async/<! (aws.async/invoke client op-map))]
       (if (:cognitect.anomalies/category response)
         (canonicalize-anomaly (get-in (meta client) [::config :api]) response)
         response))))
@@ -179,4 +179,4 @@
   (-invoke-async [this op-map]
     (invoke-async* this op-map))
   (-invoke [this op-map]
-    (aws/invoke this op-map)))
+    (async/<!! (invoke-async this op-map))))
