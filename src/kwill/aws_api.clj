@@ -3,15 +3,11 @@
   (:require
     [clojure.core.async :as async]
     [cognitect.aws.client.api :as aws]
-    [cognitect.aws.client.api.async :as aws.async]
+    [cognitect.aws.client.protocol :as client.protocol]
     [cognitect.aws.retry :as aws.retry]
     [kwill.aws-api.credentials :as kwill.credentials]
     [kwill.aws-api.profile-credentials :as profile-credentials])
   (:import (javax.net.ssl SSLException SSLHandshakeException)))
-
-(defprotocol IClient
-  (-invoke-async [_ op-map])
-  (-invoke [_ op-map]))
 
 (defn __type-pred
   [allowed-types]
@@ -95,11 +91,13 @@
 (defn mock-client
   [config & {:keys [handler]}]
   (with-meta
-    (reify IClient
+    (reify client.protocol/Client
       (-invoke-async [c op-map]
         (handler c op-map))
       (-invoke [c op-map]
-        (handler c op-map)))
+        (handler c op-map))
+      (-get-info [_] config)
+      (-stop [_]))
     {::config config}))
 
 (defn client-config
@@ -156,27 +154,16 @@
       request-id
       (assoc ::aws-request-id request-id))))
 
-(defn- invoke-async*
+(defn invoke-async
+  "Same as aws.async/invoke"
   [client op-map]
   (async/go
-    (let [response (async/<! (aws.async/invoke client op-map))]
+    (let [response (async/<! (aws/invoke-async client op-map))]
       (if (:cognitect.anomalies/category response)
         (canonicalize-anomaly (get-in (meta client) [::config :api]) response)
         response))))
 
-(defn invoke-async
-  "Same as aws.async/invoke"
-  [client op-map]
-  (-invoke-async client op-map))
-
 (defn invoke
   "Same as aws/invoke"
   [client op-name]
-  (-invoke client op-name))
-
-(extend-type cognitect.aws.client.Client
-  IClient
-  (-invoke-async [this op-map]
-    (invoke-async* this op-map))
-  (-invoke [this op-map]
-    (async/<!! (invoke-async this op-map))))
+  (async/<!! (invoke-async client op-name)))

@@ -1,4 +1,4 @@
-{:deps    {com.cognitect.aws/api {:mvn/version "0.8.587"}}
+{:deps    {com.cognitect.aws/api {:mvn/version "0.8.589"}}
  :aliases {:dev   {:extra-paths ["local"]
                    :extra-deps  {com.cognitect.aws/endpoints {:mvn/version "1.1.12.280"}
                                  com.cognitect.aws/s3        {:mvn/version "822.2.1145.0"}}}
